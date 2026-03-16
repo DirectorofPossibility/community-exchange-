@@ -1,25 +1,33 @@
-'use client'
-
-import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ArrowLeft } from 'lucide-react'
+import { ArrowRight, ArrowLeft, MapPin } from 'lucide-react'
 import {
   PATHWAYS,
   PATHWAY_COLOR_MAP,
   CENTERS,
   CENTER_COLOR_MAP,
-  SAMPLE_ACTIVITIES,
   type PathwayId,
 } from '@/lib/sample-data'
 import Wayfinder from '@/components/Wayfinder'
-import PathwayFilter from '@/components/PathwayFilter'
+import { getActivities } from '@/lib/activities'
 
-export default function ActivitiesPage() {
-  const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(null)
+export const dynamic = 'force-dynamic'
 
-  const filtered = selectedPathway
-    ? SAMPLE_ACTIVITIES.filter((a) => a.pathway === selectedPathway)
-    : SAMPLE_ACTIVITIES
+export default async function ActivitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pathway?: string }>
+}) {
+  const params = await searchParams
+  const selectedPathway = params.pathway as PathwayId | undefined
+  const activities = await getActivities(selectedPathway)
+
+  // Group activities by city for location-sorted display
+  const grouped = new Map<string, typeof activities>()
+  for (const a of activities) {
+    const key = `${a.location.city}, ${a.location.county} County`
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(a)
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
@@ -50,8 +58,8 @@ export default function ActivitiesPage() {
               Activities
             </h1>
             <p className="text-muted max-w-xl">
-              Browse community activities across all 7 pathways. Each activity
-              connects to 4 centers of engagement — go as deep as you want.
+              Browse {activities.length} community activities across the Greater Houston metro.
+              Each activity connects to 4 centers of engagement — go as deep as you want.
             </p>
           </div>
         </section>
@@ -82,56 +90,98 @@ export default function ActivitiesPage() {
         {/* Filter Bar */}
         <section className="bg-white border-b border-rule px-6 py-4 sticky top-0 z-20 shadow-header">
           <div className="max-w-6xl mx-auto">
-            <PathwayFilter selected={selectedPathway} onSelect={setSelectedPathway} />
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/activities"
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-colors ${
+                  !selectedPathway
+                    ? 'bg-ink text-white border-ink'
+                    : 'bg-white text-muted border-rule hover:border-ink'
+                }`}
+              >
+                All Pathways
+              </Link>
+              {PATHWAYS.map((p) => {
+                const colors = PATHWAY_COLOR_MAP[p.id]
+                const isActive = selectedPathway === p.id
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/activities?pathway=${p.id}`}
+                    className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-colors ${
+                      isActive
+                        ? `${colors.bg} text-white ${colors.border}`
+                        : `bg-white ${colors.text} border-rule hover:${colors.border}`
+                    }`}
+                  >
+                    {p.name}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         </section>
 
-        {/* Activity Grid */}
+        {/* Activity Grid — grouped by location */}
         <section className="px-6 py-10">
           <div className="max-w-6xl mx-auto">
-            {filtered.length === 0 ? (
+            {activities.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-muted text-lg">
                   No activities yet for this pathway. Check back soon.
                 </p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filtered.map((activity) => {
-                  const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
-                  const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                  const centerCount = Object.values(activity.centers).filter(Boolean).length
+              <div className="space-y-10">
+                {Array.from(grouped.entries()).map(([locationKey, locationActivities]) => (
+                  <div key={locationKey}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <MapPin className="w-4 h-4 text-faint" />
+                      <h2 className="font-display text-lg font-bold text-ink">{locationKey}</h2>
+                      <span className="text-xs text-faint">({locationActivities.length})</span>
+                    </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {locationActivities.map((activity) => {
+                        const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
+                        const colors = PATHWAY_COLOR_MAP[activity.pathway]
+                        const centerCount = Object.values(activity.centers).filter(Boolean).length
 
-                  return (
-                    <Link
-                      key={activity.id}
-                      href={`/activities/${activity.id}`}
-                      className={`bg-white border-2 border-rule ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col group`}
-                    >
-                      <div className="p-6 flex-1 flex flex-col">
-                        <span className={`inline-block self-start text-xs font-bold uppercase tracking-wider ${colors.text} mb-3`}>
-                          {pathway.name}
-                        </span>
-                        <h2 className="font-display text-lg font-bold text-ink mb-1 group-hover:underline">
-                          {activity.title}
-                        </h2>
-                        <p className="text-sm text-faint mb-3">{activity.org}</p>
-                        <div className="mb-4 flex items-center gap-3">
-                          <Wayfinder centers={activity.centers} />
-                          <span className="text-xs text-faint">{centerCount} of 4 centers</span>
-                        </div>
-                        <p className="text-sm text-muted leading-relaxed mb-6 flex-1">
-                          {activity.description}
-                        </p>
-                        <div>
-                          <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${colors.text}`}>
-                            Start this journey <ArrowRight className="w-4 h-4" />
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
+                        return (
+                          <Link
+                            key={activity.id}
+                            href={`/activities/${activity.id}`}
+                            className={`bg-white border-2 border-rule ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col group`}
+                          >
+                            <div className="p-6 flex-1 flex flex-col">
+                              <span className={`inline-block self-start text-xs font-bold uppercase tracking-wider ${colors.text} mb-3`}>
+                                {pathway.name}
+                              </span>
+                              <h3 className="font-display text-lg font-bold text-ink mb-1 group-hover:underline">
+                                {activity.title}
+                              </h3>
+                              <p className="text-sm text-faint mb-1">{activity.org}</p>
+                              <p className="text-xs text-faint mb-3">
+                                {activity.location.city}, {activity.location.state} {activity.location.zip}
+                              </p>
+                              <div className="mb-4 flex items-center gap-3">
+                                <Wayfinder centers={activity.centers} />
+                                <span className="text-xs text-faint">{centerCount} of 4 centers</span>
+                              </div>
+                              <p className="text-sm text-muted leading-relaxed mb-6 flex-1">
+                                {activity.description}
+                              </p>
+                              <div>
+                                <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${colors.text}`}>
+                                  Start this journey <ArrowRight className="w-4 h-4" />
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

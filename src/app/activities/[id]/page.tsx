@@ -1,7 +1,5 @@
-'use client'
-
-import { use } from 'react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import {
   ArrowLeft,
   BookOpen, Compass, Heart, Users,
@@ -12,13 +10,10 @@ import {
   PATHWAYS,
   PATHWAY_COLOR_MAP,
   CENTER_COLOR_MAP,
-  SAMPLE_ACTIVITIES,
 } from '@/lib/sample-data'
-import type { Activity } from '@/lib/sample-data'
+import { getActivity, getRelatedActivities } from '@/lib/activities'
 
-function getActivity(id: string): Activity | undefined {
-  return SAMPLE_ACTIVITIES.find((a) => a.id === id)
-}
+export const dynamic = 'force-dynamic'
 
 /** Section wrapper — each wayfinder section is a chapter of the adventure */
 function Chapter({
@@ -94,28 +89,18 @@ function ObjectCard({
   )
 }
 
-export default function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const activity = getActivity(id)
+export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const activity = await getActivity(id)
 
   if (!activity) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-paper">
-        <div className="text-center">
-          <h1 className="font-display text-2xl font-bold text-ink mb-2">Activity not found</h1>
-          <Link href="/activities" className="text-sm text-muted hover:text-ink">
-            <ArrowLeft className="w-3.5 h-3.5 inline mr-1" /> Back to Activities
-          </Link>
-        </div>
-      </div>
-    )
+    notFound()
   }
 
+  const related = await getRelatedActivities(activity)
   const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
   const colors = PATHWAY_COLOR_MAP[activity.pathway]
   const cc = activity.centerContent
-
-
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
@@ -154,11 +139,19 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
             </h1>
 
             {/* Org anchor */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-2">
               <div className="w-7 h-7 rounded-full bg-paper flex items-center justify-center border border-rule">
                 <Users size={12} className="text-faint" />
               </div>
               <span className="text-sm font-semibold text-ink">{activity.org}</span>
+            </div>
+
+            {/* Location */}
+            <div className="flex items-center gap-2 mb-4 ml-9">
+              <MapPin size={12} className="text-faint flex-shrink-0" />
+              <span className="text-xs text-muted">
+                {activity.location.address}, {activity.location.city}, {activity.location.state} {activity.location.zip} &middot; {activity.location.county} County
+              </span>
             </div>
 
             <p className="text-muted leading-relaxed max-w-2xl mb-6">
@@ -178,7 +171,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
                   <Heart size={12} /> Take Action
                 </a>
               )}
-              {activity.centers.accountability && cc.accountability && cc.accountability.length > 0 && (
+              {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
                 <>
                   <a href="#laws-policy" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule hover:border-ink transition-colors" style={{ color: CENTER_COLOR_MAP.accountability.hex }}>
                     <FileText size={12} /> Laws & Policy
@@ -193,7 +186,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
         </section>
 
         {/* ─── CHAPTER 1: Explore ─── */}
-        {activity.centers.learning && cc.learning && cc.learning.length > 0 && (
+        {activity.centers.learning && cc?.learning && cc.learning.length > 0 && (
           <div id="explore">
             <Chapter
               icon={<BookOpen size={20} />}
@@ -217,7 +210,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
         )}
 
         {/* ─── CHAPTER 2: Take Action ─── */}
-        {(cc.resource || cc.action) && (
+        {(cc?.resource || cc?.action) && (
           <div id="take-action">
             <Chapter
               icon={<Heart size={20} />}
@@ -279,7 +272,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
         )}
 
         {/* ─── CHAPTER 3: Laws & Policy ─── */}
-        {activity.centers.accountability && cc.accountability && cc.accountability.length > 0 && (
+        {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
           <div id="laws-policy">
             <Chapter
               icon={<FileText size={20} />}
@@ -298,7 +291,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
         )}
 
         {/* ─── CHAPTER 4: Who's Responsible ─── */}
-        {activity.centers.accountability && cc.accountability && cc.accountability.length > 0 && (
+        {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
           <div id="whos-responsible">
             <Chapter
               icon={<Shield size={20} />}
@@ -331,44 +324,21 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
               Explore more in the {pathway.name} pathway, or try a different direction.
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {SAMPLE_ACTIVITIES
-                .filter((a) => a.id !== activity.id && a.pathway === activity.pathway)
-                .slice(0, 3)
-                .map((related) => {
-                  const relColors = PATHWAY_COLOR_MAP[related.pathway]
-                  return (
-                    <Link
-                      key={related.id}
-                      href={`/activities/${related.id}`}
-                      className={`bg-paper border-2 border-rule ${relColors.borderTop} border-t-4 p-5 hover:shadow-card-hover transition-shadow group`}
-                    >
-                      <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug">
-                        {related.title}
-                      </h3>
-                      <p className="text-xs text-faint mt-1">{related.org}</p>
-                    </Link>
-                  )
-                })}
-              {/* If no same-pathway activities, show cross-pathway */}
-              {SAMPLE_ACTIVITIES.filter((a) => a.id !== activity.id && a.pathway === activity.pathway).length === 0 &&
-                SAMPLE_ACTIVITIES
-                  .filter((a) => a.id !== activity.id)
-                  .slice(0, 3)
-                  .map((related) => {
-                    const relColors = PATHWAY_COLOR_MAP[related.pathway]
-                    return (
-                      <Link
-                        key={related.id}
-                        href={`/activities/${related.id}`}
-                        className={`bg-paper border-2 border-rule ${relColors.borderTop} border-t-4 p-5 hover:shadow-card-hover transition-shadow group`}
-                      >
-                        <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug">
-                          {related.title}
-                        </h3>
-                        <p className="text-xs text-faint mt-1">{related.org}</p>
-                      </Link>
-                    )
-                  })}
+              {related.map((rel) => {
+                const relColors = PATHWAY_COLOR_MAP[rel.pathway]
+                return (
+                  <Link
+                    key={rel.id}
+                    href={`/activities/${rel.id}`}
+                    className={`bg-paper border-2 border-rule ${relColors.borderTop} border-t-4 p-5 hover:shadow-card-hover transition-shadow group`}
+                  >
+                    <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug">
+                      {rel.title}
+                    </h3>
+                    <p className="text-xs text-faint mt-1">{rel.org}</p>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </section>

@@ -11,13 +11,15 @@ import {
   Scale,
   Newspaper,
   Sparkles,
+  BookOpen,
+  ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
   PATHWAYS,
   PATHWAY_COLOR_MAP,
-  SAMPLE_ACTIVITIES,
 } from '@/lib/sample-data'
+import { getContent, type ContentItem } from '@/lib/db'
 
 const PATHWAY_ICONS: Record<string, React.ReactNode> = {
   health: <Heart className="w-5 h-5" />,
@@ -29,66 +31,51 @@ const PATHWAY_ICONS: Record<string, React.ReactNode> = {
   bigger: <Globe className="w-5 h-5" />,
 }
 
-/** Sample news items — will come from Supabase later */
-const SAMPLE_NEWS = [
-  {
-    id: 'n1',
-    title: 'City Council Approves New Community Health Center in Third Ward',
-    source: 'Houston Chronicle',
-    pathway: 'health' as const,
-    date: 'Mar 14',
-  },
-  {
-    id: 'n2',
-    title: 'HISD Announces Free Summer Learning Programs for All Students',
-    source: 'Houston ISD',
-    pathway: 'families' as const,
-    date: 'Mar 13',
-  },
-  {
-    id: 'n3',
-    title: 'Harris County Launches New Online Portal for Property Tax Assistance',
-    source: 'Harris County',
-    pathway: 'money' as const,
-    date: 'Mar 12',
-  },
-  {
-    id: 'n4',
-    title: 'Bayou Greenways Project Completes New Trail Section Near East End',
-    source: 'Houston Parks Board',
-    pathway: 'planet' as const,
-    date: 'Mar 11',
-  },
-  {
-    id: 'n5',
-    title: 'Early Voting Begins Next Week for Special Election in District F',
-    source: 'Harris County Elections',
-    pathway: 'voice' as const,
-    date: 'Mar 10',
-  },
-]
+const CENTER_ICONS: Record<string, React.ReactNode> = {
+  resource: <Compass size={16} className="text-resource" />,
+  action: <Heart size={16} className="text-action" />,
+  learning: <BookOpen size={16} className="text-learning" />,
+  accountability: <Scale size={16} className="text-accountability" />,
+}
 
-/** 3 Good Things — curated positive community highlights */
-const THREE_GOOD_THINGS = [
-  {
-    title: 'Neighbors Raised $12K for Sunnyside Community Garden',
-    description: 'A crowdfunding campaign hit its goal in 8 days — 200+ residents chipped in to build raised beds and a tool shed.',
-    pathway: 'hood' as const,
-  },
-  {
-    title: '47 First-Time Voters Registered at Kashmere High',
-    description: 'Student-led voter registration drive brought in the highest numbers in the school\'s history.',
-    pathway: 'voice' as const,
-  },
-  {
-    title: 'BakerRipley Helped 1,200 Families Avoid Utility Shutoffs This Month',
-    description: 'Emergency assistance program connected residents with $2.3M in bill relief before the summer heat.',
-    pathway: 'money' as const,
-  },
-]
+const CENTER_LABELS: Record<string, { title: string; subtitle: string; color: string; linkText: string }> = {
+  resource: { title: 'Resource Center', subtitle: "What's available", color: 'text-resource', linkText: 'Browse all resources' },
+  action: { title: 'Action Center', subtitle: 'How to show up', color: 'text-action', linkText: 'Find ways to participate' },
+  learning: { title: 'Library', subtitle: 'Understand the issues', color: 'text-learning', linkText: 'Explore the library' },
+}
 
-export default function HomePage() {
-  const featured = SAMPLE_ACTIVITIES.slice(0, 4)
+function ContentCard({ item }: { item: ContentItem }) {
+  const pathway = item.pathway ? PATHWAYS.find(p => p.id === item.pathway) : null
+  const colors = item.pathway ? PATHWAY_COLOR_MAP[item.pathway] : null
+  return (
+    <Link href={`/content/${item.id}`} className="block group">
+      {pathway && colors && (
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
+          {pathway.name}
+        </span>
+      )}
+      <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug mt-0.5">
+        {item.title}
+      </h3>
+      <p className="text-xs text-faint mt-0.5">{item.org_name}</p>
+    </Link>
+  )
+}
+
+export default async function HomePage() {
+  // Fetch real content by center — all in parallel
+  const [resourceItems, actionItems, learningItems, allItems] = await Promise.all([
+    getContent({ limit: 4, center: 'resource' }),
+    getContent({ limit: 4, center: 'action' }),
+    getContent({ limit: 4, center: 'learning' }),
+    getContent({ limit: 10 }),
+  ])
+
+  const centerData: Record<string, ContentItem[]> = {
+    resource: resourceItems,
+    action: actionItems,
+    learning: learningItems,
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
@@ -145,130 +132,82 @@ export default function HomePage() {
         <section className="px-6 py-10">
           <div className="max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-3 gap-6">
-
-              {/* Resource Center */}
-              <div className="bg-white border-2 border-rule">
-                <div className="px-5 py-4 border-b-2 border-rule flex items-center gap-2">
-                  <Compass size={16} className="text-resource" />
-                  <h2 className="font-display text-sm font-bold uppercase tracking-wider text-resource">
-                    Resource Center
-                  </h2>
-                  <span className="text-[10px] text-faint ml-auto">What&rsquo;s available</span>
-                </div>
-                <div className="p-5 space-y-4">
-                  {featured.filter(a => a.centers.resource).slice(0, 3).map((activity) => {
-                    const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                    return (
-                      <Link key={activity.id} href="/activities" className="block group">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
-                          {PATHWAYS.find(p => p.id === activity.pathway)!.name}
-                        </span>
-                        <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug mt-0.5">
-                          {activity.title}
-                        </h3>
-                        <p className="text-xs text-faint mt-0.5">{activity.org}</p>
+              {(['resource', 'action', 'learning'] as const).map((centerKey) => {
+                const meta = CENTER_LABELS[centerKey]
+                const items = centerData[centerKey]
+                return (
+                  <div key={centerKey} className="bg-white border-2 border-rule">
+                    <div className="px-5 py-4 border-b-2 border-rule flex items-center gap-2">
+                      {CENTER_ICONS[centerKey]}
+                      <h2 className={`font-display text-sm font-bold uppercase tracking-wider ${meta.color}`}>
+                        {meta.title}
+                      </h2>
+                      <span className="text-[10px] text-faint ml-auto">{meta.subtitle}</span>
+                    </div>
+                    <div className="p-5 space-y-4">
+                      {items.length > 0 ? (
+                        items.slice(0, 3).map((item) => (
+                          <ContentCard key={item.id} item={item} />
+                        ))
+                      ) : (
+                        <p className="text-xs text-faint italic">Content coming soon</p>
+                      )}
+                      <Link href="/activities" className={`inline-flex items-center gap-1 text-xs font-bold ${meta.color} hover:underline`}>
+                        {meta.linkText} <ArrowRight size={12} />
                       </Link>
-                    )
-                  })}
-                  <Link href="/activities" className="inline-flex items-center gap-1 text-xs font-bold text-resource hover:underline">
-                    Browse all resources <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Action Center */}
-              <div className="bg-white border-2 border-rule">
-                <div className="px-5 py-4 border-b-2 border-rule flex items-center gap-2">
-                  <Heart size={16} className="text-action" />
-                  <h2 className="font-display text-sm font-bold uppercase tracking-wider text-action">
-                    Action Center
-                  </h2>
-                  <span className="text-[10px] text-faint ml-auto">How to show up</span>
-                </div>
-                <div className="p-5 space-y-4">
-                  {featured.filter(a => a.centers.action).slice(0, 3).map((activity) => {
-                    const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                    const actionItems = activity.centerContent.action || []
-                    return (
-                      <Link key={activity.id} href="/activities" className="block group">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
-                          {PATHWAYS.find(p => p.id === activity.pathway)!.name}
-                        </span>
-                        <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug mt-0.5">
-                          {actionItems[0]?.title || activity.title}
-                        </h3>
-                        <p className="text-xs text-faint mt-0.5">{actionItems[0]?.description || activity.org}</p>
-                      </Link>
-                    )
-                  })}
-                  <Link href="/activities" className="inline-flex items-center gap-1 text-xs font-bold text-action hover:underline">
-                    Find ways to participate <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Library */}
-              <div className="bg-white border-2 border-rule">
-                <div className="px-5 py-4 border-b-2 border-rule flex items-center gap-2">
-                  <Scale size={16} className="text-accountability" />
-                  <h2 className="font-display text-sm font-bold uppercase tracking-wider text-accountability">
-                    Library
-                  </h2>
-                  <span className="text-[10px] text-faint ml-auto">Who makes decisions</span>
-                </div>
-                <div className="p-5 space-y-4">
-                  {featured.filter(a => a.centers.accountability).slice(0, 3).map((activity) => {
-                    const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                    const officials = activity.centerContent.accountability || []
-                    return (
-                      <Link key={activity.id} href="/activities" className="block group">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
-                          {PATHWAYS.find(p => p.id === activity.pathway)!.name}
-                        </span>
-                        <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug mt-0.5">
-                          {officials[0]?.title || activity.title}
-                        </h3>
-                        <p className="text-xs text-faint mt-0.5">
-                          {officials[0] ? `${officials[0].level} · ${officials[0].role}` : activity.org}
-                        </p>
-                      </Link>
-                    )
-                  })}
-                  <Link href="/activities" className="inline-flex items-center gap-1 text-xs font-bold text-accountability hover:underline">
-                    Explore the library <ArrowRight size={12} />
-                  </Link>
-                </div>
-              </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </section>
 
-        {/* ─── News + 3 Good Things ─── */}
+        {/* ─── Recent Content + 3 Good Things ─── */}
         <section className="px-6 py-10 bg-white border-t-2 border-rule">
           <div className="max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-5 gap-8">
 
-              {/* News Feed */}
+              {/* Recent Content Feed */}
               <div className="lg:col-span-3">
                 <div className="flex items-center gap-2 mb-6">
                   <Newspaper size={16} className="text-ink" />
-                  <h2 className="font-display text-lg font-bold text-ink">Community News</h2>
+                  <h2 className="font-display text-lg font-bold text-ink">Latest Content</h2>
                 </div>
                 <div className="divide-y divide-rule">
-                  {SAMPLE_NEWS.map((item) => {
-                    const colors = PATHWAY_COLOR_MAP[item.pathway]
+                  {allItems.slice(0, 6).map((item) => {
+                    const colors = item.pathway ? PATHWAY_COLOR_MAP[item.pathway] : null
                     return (
                       <div key={item.id} className="py-4 first:pt-0 last:pb-0">
                         <div className="flex items-start gap-3">
-                          <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${colors.bg}`} />
+                          <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${colors?.bg || 'bg-rule'}`} />
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-sm font-bold text-ink leading-snug">
-                              {item.title}
-                            </h3>
+                            <Link href={`/content/${item.id}`} className="group">
+                              <h3 className="text-sm font-bold text-ink leading-snug group-hover:underline">
+                                {item.title}
+                              </h3>
+                            </Link>
                             <p className="text-xs text-faint mt-1">
-                              {item.source} &middot; {item.date}
+                              {item.org_name}
+                              {item.content_type && (
+                                <> &middot; {item.content_type.replace(/_/g, ' ')}</>
+                              )}
                             </p>
+                            {item.description && (
+                              <p className="text-xs text-muted mt-1 line-clamp-2">
+                                {item.description}
+                              </p>
+                            )}
                           </div>
+                          <a
+                            href={item.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-faint hover:text-ink flex-shrink-0 mt-1"
+                            title="View source"
+                          >
+                            <ExternalLink size={12} />
+                          </a>
                         </div>
                       </div>
                     )
@@ -283,20 +222,30 @@ export default function HomePage() {
                   <h2 className="font-display text-lg font-bold text-ink">3 Good Things</h2>
                 </div>
                 <div className="space-y-4">
-                  {THREE_GOOD_THINGS.map((item, i) => {
-                    const colors = PATHWAY_COLOR_MAP[item.pathway]
+                  {/* Pull from learning center — positive content */}
+                  {learningItems.slice(0, 3).map((item) => {
+                    const colors = item.pathway ? PATHWAY_COLOR_MAP[item.pathway] : null
+                    const pathway = item.pathway ? PATHWAYS.find(p => p.id === item.pathway) : null
                     return (
-                      <div key={i} className={`border-2 border-rule ${colors.borderLeft} border-l-4 p-4`}>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
-                          {PATHWAYS.find(p => p.id === item.pathway)!.name}
-                        </span>
+                      <Link
+                        key={item.id}
+                        href={`/content/${item.id}`}
+                        className={`block border-2 border-rule ${colors?.borderLeft || 'border-l-rule'} border-l-4 p-4 hover:shadow-card-hover transition-shadow`}
+                      >
+                        {pathway && colors && (
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${colors.text}`}>
+                            {pathway.name}
+                          </span>
+                        )}
                         <h3 className="text-sm font-bold text-ink leading-snug mt-1">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-muted leading-relaxed mt-1">
-                          {item.description}
-                        </p>
-                      </div>
+                        {item.description && (
+                          <p className="text-xs text-muted leading-relaxed mt-1 line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
+                      </Link>
                     )
                   })}
                 </div>
