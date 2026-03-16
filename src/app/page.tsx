@@ -139,13 +139,13 @@ export default async function HomePage() {
                 const items = centerData[centerKey]
                 return (
                   <div key={centerKey} className="bg-white border-2 border-rule">
-                    <div className="px-5 py-4 border-b-2 border-rule flex items-center gap-2">
+                    <Link href={`/search?center=${centerKey}`} className="px-5 py-4 border-b-2 border-rule flex items-center gap-2 hover:bg-paper/50 transition-colors">
                       {CENTER_ICONS[centerKey]}
                       <h2 className={`font-display text-sm font-bold uppercase tracking-wider ${meta.color}`}>
                         {meta.title}
                       </h2>
                       <span className="text-[10px] text-faint ml-auto">{meta.subtitle}</span>
-                    </div>
+                    </Link>
                     <div className="p-5 space-y-4">
                       {items.length > 0 ? (
                         items.slice(0, 3).map((item) => (
@@ -154,7 +154,7 @@ export default async function HomePage() {
                       ) : (
                         <p className="text-xs text-faint italic">Content coming soon</p>
                       )}
-                      <Link href="/activities" className={`inline-flex items-center gap-1 text-xs font-bold ${meta.color} hover:underline`}>
+                      <Link href={`/search?center=${centerKey}`} className={`inline-flex items-center gap-1 text-xs font-bold ${meta.color} hover:underline`}>
                         {meta.linkText} <ArrowRight size={12} />
                       </Link>
                     </div>

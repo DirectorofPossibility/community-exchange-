@@ -69,18 +69,22 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
             {/* Center + Pathway badges */}
             <div className="flex items-center gap-3 mb-3">
               {centerColor && (
-                <span
-                  className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+                <Link
+                  href={`/search?center=${item.center}`}
+                  className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm hover:opacity-80 transition-opacity"
                   style={{ color: centerColor.hex, background: centerColor.hex + '14' }}
                 >
                   {centerMeta.icon && <span className="w-3 h-3">{CENTER_META[item.center]?.icon}</span>}
                   {centerMeta.label}
-                </span>
+                </Link>
               )}
               {pathway && colors && (
-                <span className={`text-xs font-bold uppercase tracking-wider ${colors.text}`}>
+                <Link
+                  href={`/activities?pathway=${item.pathway}`}
+                  className={`text-xs font-bold uppercase tracking-wider ${colors.text} hover:underline`}
+                >
                   {pathway.name}
-                </span>
+                </Link>
               )}
             </div>
 
@@ -151,9 +155,13 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
             <div className="max-w-4xl mx-auto flex flex-wrap items-center gap-2">
               <Tag size={12} className="text-faint" />
               {item.keywords.map((kw, i) => (
-                <span key={i} className="text-xs text-muted bg-paper px-2 py-0.5 border border-rule">
+                <Link
+                  key={i}
+                  href={`/search?q=${encodeURIComponent(kw)}`}
+                  className="text-xs text-muted bg-paper px-2 py-0.5 border border-rule hover:border-ink hover:text-ink transition-colors"
+                >
                   {kw}
-                </span>
+                </Link>
               ))}
             </div>
           </section>
