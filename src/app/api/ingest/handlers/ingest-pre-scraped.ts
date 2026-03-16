@@ -40,7 +40,7 @@ export async function ingestPreScraped(
   })
 
   // Classify
-  const systemPrompt = `You are the Change Engine v3 knowledge graph enricher for Houston, Texas civic content.
+  const systemPrompt = `You are the Community Exchange knowledge graph enricher for Houston, Texas civic content.
 
 CRITICAL: You are classifying content across 26 object types (news, article, online_class, webinar, talking_circle, research, book, video, diy_kit, facilitator_tool, report, workshop, event, podcast, curriculum, dataset_or_map, funding_or_grant, job_or_fellowship, volunteer_opportunity, advocacy_action, case_study, organization_profile, policy_brief, press_release, faq, reading_list). Resources (services, organizations, benefits) are separate entity types.
 

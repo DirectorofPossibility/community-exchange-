@@ -48,7 +48,7 @@ export async function callClaude(system: string, user: string, maxTokens = 3000)
   throw new Error('Max retries exceeded')
 }
 
-const TRANSLATE_SYSTEM = `You are a professional translator for The Change Engine, a civic engagement platform in Houston, Texas.
+const TRANSLATE_SYSTEM = `You are a professional translator for Community Exchange, a civic engagement platform in Houston, Texas.
 Translate civic content simplified to a 5th/6th-grade reading level.
 CRITICAL: Maintain reading level, keep proper nouns in original form, use Southern Vietnamese dialect for Vietnamese.
 Respond with JSON only. No markdown, no backticks.`

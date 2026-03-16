@@ -1,5 +1,5 @@
 /**
- * Standardized API response helpers for The Change Engine.
+ * Standardized API response helpers for Community Exchange.
  *
  * All API routes should use these helpers to ensure consistent response
  * shapes across the platform. This makes it easy for any frontend to

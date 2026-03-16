@@ -132,7 +132,7 @@ export async function scrapeUrl(url: string): Promise<{
   validateUrl(url)
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; ChangeEngine/1.0; +https://changeengine.us)',
+      'User-Agent': 'Mozilla/5.0 (compatible; CommunityExchange/1.0; +https://communityexchange.us)',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
     },

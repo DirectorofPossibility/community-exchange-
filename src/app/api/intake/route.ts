@@ -1,5 +1,5 @@
 /**
- * @fileoverview POST /api/intake — Unified data intake for The Change Engine.
+ * @fileoverview POST /api/intake — Unified data intake for Community Exchange.
  *
  * Single entry point for ALL data flowing into the platform. Accepts any
  * entity type, routes to the correct handler, and ensures everything gets
@@ -343,7 +343,7 @@ export async function POST(req: NextRequest) {
 // Support GET for health check
 export async function GET() {
   return NextResponse.json({
-    service: 'Change Engine Unified Intake',
+    service: 'Community Exchange Unified Intake',
     version: '1.0',
     supported_types: [
       'content — Ingest URLs through classification pipeline',
