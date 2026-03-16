@@ -21,6 +21,8 @@ import {
 } from '@/lib/sample-data'
 import { getContent, type ContentItem } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 const PATHWAY_ICONS: Record<string, React.ReactNode> = {
   health: <Heart className="w-5 h-5" />,
   families: <GraduationCap className="w-5 h-5" />,
