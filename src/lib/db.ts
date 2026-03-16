@@ -108,7 +108,7 @@ export async function getContent(options: {
     .eq('status', 'needs_review')
     .is('parent_inbox_id', null)
     .order('created_at', { ascending: false })
-    .limit(limit * 2) // fetch extra to filter after center/pathway join
+    .limit(100) // fetch all to ensure center/pathway filtering works with small datasets
 
   const { data: items, error } = await query
   if (error || !items || items.length === 0) return []
