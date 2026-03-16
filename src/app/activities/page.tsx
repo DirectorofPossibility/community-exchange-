@@ -10,15 +10,12 @@ import {
   CENTER_COLOR_MAP,
   SAMPLE_ACTIVITIES,
   type PathwayId,
-  type Activity,
 } from '@/lib/sample-data'
 import Wayfinder from '@/components/Wayfinder'
-import WayfinderSidebar from '@/components/WayfinderSidebar'
 import PathwayFilter from '@/components/PathwayFilter'
 
 export default function ActivitiesPage() {
   const [selectedPathway, setSelectedPathway] = useState<PathwayId | null>(null)
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
   const filtered = selectedPathway
     ? SAMPLE_ACTIVITIES.filter((a) => a.pathway === selectedPathway)
@@ -89,102 +86,54 @@ export default function ActivitiesPage() {
           </div>
         </section>
 
-        {/* Content: Grid + Sidebar */}
+        {/* Activity Grid */}
         <section className="px-6 py-10">
           <div className="max-w-6xl mx-auto">
-            <div className="flex gap-8">
-              {/* Activity Grid */}
-              <div className="flex-1 min-w-0">
-                {filtered.length === 0 ? (
-                  <div className="text-center py-20">
-                    <p className="text-muted text-lg">
-                      No activities yet for this pathway. Check back soon.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    {filtered.map((activity) => {
-                      const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
-                      const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                      const centerCount = Object.values(activity.centers).filter(Boolean).length
-                      const isSelected = selectedActivity?.id === activity.id
-
-                      return (
-                        <article
-                          key={activity.id}
-                          onClick={() => setSelectedActivity(isSelected ? null : activity)}
-                          className={`bg-white border-2 ${
-                            isSelected ? 'border-ink' : 'border-rule'
-                          } ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col cursor-pointer`}
-                        >
-                          <div className="p-6 flex-1 flex flex-col">
-                            {/* Pathway badge */}
-                            <span
-                              className={`inline-block self-start text-xs font-bold uppercase tracking-wider ${colors.text} mb-3`}
-                            >
-                              {pathway.name}
-                            </span>
-
-                            {/* Title */}
-                            <h2 className="font-display text-lg font-bold text-ink mb-1">
-                              {activity.title}
-                            </h2>
-
-                            {/* Org */}
-                            <p className="text-sm text-faint mb-3">{activity.org}</p>
-
-                            {/* Center indicator */}
-                            <div className="mb-4 flex items-center gap-3">
-                              <Wayfinder centers={activity.centers} />
-                              <span className="text-xs text-faint">
-                                {centerCount} of 4 centers
-                              </span>
-                            </div>
-
-                            {/* Description */}
-                            <p className="text-sm text-muted leading-relaxed mb-6 flex-1">
-                              {activity.description}
-                            </p>
-
-                            {/* CTA */}
-                            <div>
-                              <button
-                                className={`inline-flex items-center gap-1.5 text-sm font-bold ${colors.text} hover:underline`}
-                              >
-                                {isSelected ? 'Close' : 'Explore'}{' '}
-                                <ArrowRight className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      )
-                    })}
-                  </div>
-                )}
+            {filtered.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-muted text-lg">
+                  No activities yet for this pathway. Check back soon.
+                </p>
               </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filtered.map((activity) => {
+                  const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
+                  const colors = PATHWAY_COLOR_MAP[activity.pathway]
+                  const centerCount = Object.values(activity.centers).filter(Boolean).length
 
-              {/* Wayfinder Sidebar */}
-              <div className="hidden lg:block w-80 flex-shrink-0">
-                {selectedActivity ? (
-                  <div className="sticky top-24">
-                    <WayfinderSidebar activity={selectedActivity} />
-                  </div>
-                ) : (
-                  <div className="sticky top-24">
-                    <div className="bg-white border-2 border-rule p-6 text-center">
-                      <p className="text-sm text-muted mb-2 font-display font-bold">
-                        Select an activity
-                      </p>
-                      <p className="text-xs text-faint leading-relaxed">
-                        Click any activity card to see its wayfinder — the
-                        connected resources, actions, and decision-makers
-                        available to you.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  return (
+                    <Link
+                      key={activity.id}
+                      href={`/activities/${activity.id}`}
+                      className={`bg-white border-2 border-rule ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col group`}
+                    >
+                      <div className="p-6 flex-1 flex flex-col">
+                        <span className={`inline-block self-start text-xs font-bold uppercase tracking-wider ${colors.text} mb-3`}>
+                          {pathway.name}
+                        </span>
+                        <h2 className="font-display text-lg font-bold text-ink mb-1 group-hover:underline">
+                          {activity.title}
+                        </h2>
+                        <p className="text-sm text-faint mb-3">{activity.org}</p>
+                        <div className="mb-4 flex items-center gap-3">
+                          <Wayfinder centers={activity.centers} />
+                          <span className="text-xs text-faint">{centerCount} of 4 centers</span>
+                        </div>
+                        <p className="text-sm text-muted leading-relaxed mb-6 flex-1">
+                          {activity.description}
+                        </p>
+                        <div>
+                          <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${colors.text}`}>
+                            Start this journey <ArrowRight className="w-4 h-4" />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
-            </div>
+            )}
           </div>
         </section>
       </main>
