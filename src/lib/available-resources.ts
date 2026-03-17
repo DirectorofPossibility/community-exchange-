@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { SAMPLE_ACTIVITIES, type Activity } from './sample-data'
+import { safeQuery, safeQueryMany } from '@/lib/safe-query'
 
 // Re-export the type under the new name
 export type { Activity as AvailableResource } from './sample-data'
@@ -56,47 +57,38 @@ function rowToResource(row: AvailableResourceRow): Activity {
 }
 
 export async function getAvailableResources(pathway?: string): Promise<Activity[]> {
-  try {
-    const supabase = await createClient()
-    let query = supabase.from('available_resources').select('*').order('city').order('title')
-    if (pathway) {
-      query = query.eq('pathway', pathway)
-    }
-    const { data, error } = await query
-    if (error || !data || data.length === 0) throw new Error('No DB results')
-    return (data as AvailableResourceRow[]).map(rowToResource)
-  } catch {
-    let resources = [...SAMPLE_ACTIVITIES]
-    if (pathway) resources = resources.filter(a => a.pathway === pathway)
-    return resources
+  const supabase = await createClient()
+  let query = supabase.from('available_resources').select('*').order('city').order('title')
+  if (pathway) {
+    query = query.eq('pathway', pathway)
   }
+  const data = await safeQueryMany<AvailableResourceRow>(() => query)
+  if (data.length > 0) return data.map(rowToResource)
+  // Fall back to sample data
+  let resources = [...SAMPLE_ACTIVITIES]
+  if (pathway) resources = resources.filter(a => a.pathway === pathway)
+  return resources
 }
 
 export async function getAvailableResource(id: string): Promise<Activity | null> {
-  try {
-    const supabase = await createClient()
-    const { data, error } = await supabase.from('available_resources').select('*').eq('id', id).single()
-    if (error || !data) throw new Error('Not found in DB')
-    return rowToResource(data as AvailableResourceRow)
-  } catch {
-    return SAMPLE_ACTIVITIES.find(a => a.id === id) || null
-  }
+  const supabase = await createClient()
+  const data = await safeQuery<AvailableResourceRow>(() =>
+    supabase.from('available_resources').select('*').eq('id', id).single()
+  )
+  if (data) return rowToResource(data)
+  return SAMPLE_ACTIVITIES.find(a => a.id === id) || null
 }
 
 export async function getRelatedResources(resource: Activity, limit = 3): Promise<Activity[]> {
-  try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('available_resources')
-      .select('*')
+  const supabase = await createClient()
+  const data = await safeQueryMany<AvailableResourceRow>(() =>
+    supabase.from('available_resources').select('*')
       .eq('pathway', resource.pathway)
       .neq('id', resource.id)
       .limit(limit)
-    if (error || !data || data.length === 0) throw new Error('No DB results')
-    return (data as AvailableResourceRow[]).map(rowToResource)
-  } catch {
-    return SAMPLE_ACTIVITIES
-      .filter(a => a.id !== resource.id && a.pathway === resource.pathway)
-      .slice(0, limit)
-  }
+  )
+  if (data.length > 0) return data.map(rowToResource)
+  return SAMPLE_ACTIVITIES
+    .filter(a => a.id !== resource.id && a.pathway === resource.pathway)
+    .slice(0, limit)
 }

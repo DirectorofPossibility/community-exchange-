@@ -3,6 +3,7 @@
 // Language: goals not deficits, curiosity not judgment, agency not charity.
 
 import { createClient } from '@supabase/supabase-js'
+import { safeQueryMany } from '@/lib/safe-query'
 
 function getSupabase() {
   return createClient(
@@ -150,26 +151,25 @@ export async function getAvailableResources({
   }
   if (county && county !== 'all') query = query.ilike('city', `%${county}%`)
 
-  const { data, error } = await query
-  if (error) { console.error('getAvailableResources error:', error); return [] }
-  return data || []
+  return await safeQueryMany(() => query)
 }
 
 export async function getCounties(): Promise<string[]> {
   const supabase = getSupabase()
-  const { data } = await supabase
-    .from('organizations').select('city')
-    .is('deleted_at', null).not('city', 'is', null)
-  const rows = (data || []) as Array<{ city: string | null }>
+  const rows = await safeQueryMany<{ city: string | null }>(() =>
+    supabase.from('organizations').select('city')
+      .is('deleted_at', null).not('city', 'is', null)
+  )
   return Array.from(new Set(rows.map(d => d.city).filter(Boolean) as string[])).sort()
 }
 
 export async function getPathwayCounts(): Promise<Record<string, number>> {
   const supabase = getSupabase()
-  const { data } = await supabase.from('organizations').select('tags').is('deleted_at', null)
+  const orgRows = await safeQueryMany<{ tags: string[] | null }>(() =>
+    supabase.from('organizations').select('tags').is('deleted_at', null)
+  )
   const counts: Record<string, number> = {}
   PATHWAYS.forEach(p => { counts[p.id] = 0 })
-  const orgRows = (data || []) as Array<{ tags: string[] | null }>
   orgRows.forEach(org => {
     const orgTags = org.tags
     if (!orgTags) return
@@ -193,7 +193,13 @@ export async function getRecentOrgs(): Promise<OrgRecord[]> {
 
 export async function getOrgCount(): Promise<number> {
   const supabase = getSupabase()
-  const { count } = await supabase
-    .from('organizations').select('*', { count: 'exact', head: true }).is('deleted_at', null)
-  return count || 0
+  try {
+    const { count, error } = await supabase
+      .from('organizations').select('*', { count: 'exact', head: true }).is('deleted_at', null)
+    if (error) { console.error('[getOrgCount]', error); return 0 }
+    return count || 0
+  } catch (err) {
+    console.error('[getOrgCount] threw:', err)
+    return 0
+  }
 }

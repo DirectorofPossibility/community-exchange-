@@ -6,6 +6,7 @@
  */
 
 import { createServiceClient } from '@/lib/supabase/server'
+import { safeQuery, safeQueryMany } from '@/lib/safe-query'
 
 // ── Theme → Pathway mapping ──────────────────────────────────────────
 const THEME_TO_PATHWAY: Record<string, string> = {
@@ -116,50 +117,44 @@ export async function getContent(options: {
     .order('created_at', { ascending: false })
     .limit(100) // fetch all to ensure center/pathway filtering works with small datasets
 
-  const { data: items, error } = await query
-  if (error) {
-    console.error('[getContent] Supabase error:', error.message, error.code)
-    return []
-  }
-  if (!items || items.length === 0) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items = await safeQueryMany<any>(() => query)
+  if (items.length === 0) {
     console.warn('[getContent] No items returned from content_inbox')
     return []
   }
 
   // Get IDs for junction lookups
-  const ids = items.map(i => i.id)
+  const ids = items.map((i: any) => i.id)
 
   // Parallel: fetch classifications, pathways, and org names
-  const [classResult, pathwayResult, orgResult] = await Promise.all([
-    supabase
-      .from('content_review_queue')
-      .select('inbox_id, ai_classification')
-      .in('inbox_id', ids),
-    supabase
-      .from('content_pathways')
-      .select('content_id, theme_id, is_primary')
-      .in('content_id', ids)
-      .eq('is_primary', true),
-    supabase
-      .from('organizations')
-      .select('org_id, org_name')
-      .in('org_id', items.map(i => i.org_id).filter(Boolean) as string[]),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [classRows, pathwayRows, orgRows] = await Promise.all([
+    safeQueryMany<any>(() =>
+      supabase.from('content_review_queue').select('inbox_id, ai_classification').in('inbox_id', ids)
+    ),
+    safeQueryMany<any>(() =>
+      supabase.from('content_pathways').select('content_id, theme_id, is_primary').in('content_id', ids).eq('is_primary', true)
+    ),
+    safeQueryMany<any>(() =>
+      supabase.from('organizations').select('org_id, org_name').in('org_id', items.map((i: any) => i.org_id).filter(Boolean) as string[])
+    ),
   ])
 
   // Build lookup maps
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const classMap = new Map<string, any>()
-  for (const row of classResult.data || []) {
+  for (const row of classRows) {
     classMap.set(row.inbox_id, row.ai_classification)
   }
 
   const pathwayMap = new Map<string, string>()
-  for (const row of pathwayResult.data || []) {
+  for (const row of pathwayRows) {
     pathwayMap.set(row.content_id, THEME_TO_PATHWAY[row.theme_id] || 'bigger')
   }
 
   const orgMap = new Map<string, string>()
-  for (const row of orgResult.data || []) {
+  for (const row of orgRows) {
     orgMap.set(row.org_id, row.org_name)
   }
 
@@ -208,34 +203,29 @@ export async function getContent(options: {
 export async function getContentById(id: string): Promise<ContentItem | null> {
   const supabase = createServiceClient()
 
-  const { data: item } = await supabase
-    .from('content_inbox')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const item = await safeQuery<any>(() =>
+    supabase.from('content_inbox').select('*').eq('id', id).single()
+  )
 
   if (!item) return null
 
-  const [classResult, pathwayResult, orgResult] = await Promise.all([
-    supabase
-      .from('content_review_queue')
-      .select('ai_classification')
-      .eq('inbox_id', id)
-      .single(),
-    supabase
-      .from('content_pathways')
-      .select('theme_id, is_primary')
-      .eq('content_id', id)
-      .eq('is_primary', true)
-      .single(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [classData, pathwayData, orgData] = await Promise.all([
+    safeQuery<any>(() =>
+      supabase.from('content_review_queue').select('ai_classification').eq('inbox_id', id).single()
+    ),
+    safeQuery<any>(() =>
+      supabase.from('content_pathways').select('theme_id, is_primary').eq('content_id', id).eq('is_primary', true).single()
+    ),
     item.org_id
-      ? supabase.from('organizations').select('org_name').eq('org_id', item.org_id).single()
-      : Promise.resolve({ data: null }),
+      ? safeQuery<any>(() => supabase.from('organizations').select('org_name').eq('org_id', item.org_id).single())
+      : Promise.resolve(null),
   ])
 
-  const classification = classResult.data?.ai_classification
-  const itemPathway = pathwayResult.data
-    ? THEME_TO_PATHWAY[pathwayResult.data.theme_id] || null
+  const classification = classData?.ai_classification
+  const itemPathway = pathwayData
+    ? THEME_TO_PATHWAY[pathwayData.theme_id] || null
     : null
 
   return {
@@ -245,7 +235,7 @@ export async function getContentById(id: string): Promise<ContentItem | null> {
     source_url: item.source_url,
     source_domain: item.source_domain || '',
     org_id: item.org_id,
-    org_name: orgResult.data?.org_name || item.source_domain || 'Unknown',
+    org_name: orgData?.org_name || item.source_domain || 'Unknown',
     content_type: item.content_type,
     image_url: item.image_url,
     created_at: item.created_at,
@@ -284,22 +274,25 @@ export async function getRelatedContent(
 export async function getChildContent(parentId: string): Promise<ContentItem[]> {
   const supabase = createServiceClient()
 
-  const { data: items } = await supabase
-    .from('content_inbox')
-    .select('id, title, description, source_url, source_domain, org_id, content_type, image_url, created_at')
-    .eq('parent_inbox_id', parentId)
-    .order('created_at', { ascending: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items = await safeQueryMany<any>(() =>
+    supabase.from('content_inbox')
+      .select('id, title, description, source_url, source_domain, org_id, content_type, image_url, created_at')
+      .eq('parent_inbox_id', parentId)
+      .order('created_at', { ascending: true })
+  )
 
-  if (!items) return []
+  if (items.length === 0) return []
 
   // Get org name
-  const orgIds = Array.from(new Set(items.map(i => i.org_id).filter(Boolean))) as string[]
-  const { data: orgs } = orgIds.length > 0
-    ? await supabase.from('organizations').select('org_id, org_name').in('org_id', orgIds)
-    : { data: [] }
+  const orgIds = Array.from(new Set(items.map((i: any) => i.org_id).filter(Boolean))) as string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orgs = orgIds.length > 0
+    ? await safeQueryMany<any>(() => supabase.from('organizations').select('org_id, org_name').in('org_id', orgIds))
+    : []
 
   const orgMap = new Map<string, string>()
-  for (const org of orgs || []) orgMap.set(org.org_id, org.org_name)
+  for (const org of orgs) orgMap.set(org.org_id, org.org_name)
 
   return items.map(item => ({
     id: item.id,
