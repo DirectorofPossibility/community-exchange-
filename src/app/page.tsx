@@ -23,7 +23,7 @@ import {
   type PathwayId,
 } from '@/lib/sample-data'
 import type { Activity } from '@/lib/sample-data'
-import { getActivities } from '@/lib/activities'
+import { getAvailableResources } from '@/lib/available-resources'
 import { getContent, type ContentItem } from '@/lib/db'
 import Wayfinder from '@/components/Wayfinder'
 
@@ -59,7 +59,7 @@ function ActivityCard({ activity }: { activity: Activity }) {
 
   return (
     <Link
-      href={`/activities/${activity.id}`}
+      href={`/available-resources/${activity.id}`}
       className={`bg-white border-2 border-rule ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col group`}
     >
       <div className="p-5 flex-1 flex flex-col">
@@ -103,7 +103,7 @@ function DBContentCard({ item }: { item: ContentItem }) {
 export default async function HomePage() {
   // Fetch both sample activities and real DB content in parallel
   const [allActivities, resourceItems, actionItems, learningItems, allContent] = await Promise.all([
-    getActivities(),
+    getAvailableResources(),
     getContent({ limit: 4, center: 'resource' }),
     getContent({ limit: 4, center: 'action' }),
     getContent({ limit: 4, center: 'learning' }),
@@ -138,7 +138,7 @@ export default async function HomePage() {
             Community Exchange
           </Link>
           <nav className="flex gap-6 text-sm font-medium text-muted">
-            <Link href="/activities" className="hover:text-ink transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-ink transition-colors">Available Resources</Link>
             <Link href="/search" className="hover:text-ink transition-colors">Search</Link>
             <Link href="/about" className="hover:text-ink transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-ink transition-colors">Sign In</Link>
@@ -157,13 +157,13 @@ export default async function HomePage() {
               What&rsquo;s happening in your community — and how you can be part of it.
             </h1>
             <p className="text-white/60 max-w-xl text-sm leading-relaxed mb-6">
-              Resources, activities, news, and the people who make decisions — all in one place.
+              Resources, services, news, and the people who make decisions — all in one place.
             </p>
             <Link
-              href="/activities"
+              href="/available-resources"
               className="inline-flex items-center gap-2 bg-white text-ink font-bold text-sm px-5 py-2.5 hover:bg-white/90 transition-colors"
             >
-              Browse All Activities <ArrowRight size={16} />
+              Browse All Resources <ArrowRight size={16} />
             </Link>
           </div>
         </section>
@@ -177,7 +177,7 @@ export default async function HomePage() {
               return (
                 <Link
                   key={p.id}
-                  href={`/activities?pathway=${p.id}`}
+                  href={`/available-resources?pathway=${p.id}`}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap border-2 border-rule hover:border-ink ${colors.text} transition-colors`}
                 >
                   {PATHWAY_ICONS[p.id]}
@@ -308,12 +308,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ─── Featured Activities ─── */}
+        {/* ─── Featured Resources ─── */}
         <section className="px-6 py-10 border-t-2 border-rule">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-lg font-bold text-ink">Start Exploring</h2>
-              <Link href="/activities" className="text-xs font-bold text-muted hover:text-ink transition-colors inline-flex items-center gap-1">
+              <Link href="/available-resources" className="text-xs font-bold text-muted hover:text-ink transition-colors inline-flex items-center gap-1">
                 View all <ArrowRight size={12} />
               </Link>
             </div>
@@ -329,7 +329,7 @@ export default async function HomePage() {
         <section className="bg-white border-t-2 border-rule px-6 py-6">
           <div className="max-w-6xl mx-auto">
             <h2 className="font-display text-sm font-bold uppercase tracking-wider text-ink mb-4">
-              Every activity connects to 4 centers of engagement
+              Every resource connects to 4 centers of engagement
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {CENTERS.map((center) => {
@@ -370,14 +370,14 @@ export default async function HomePage() {
                 return (
                   <Link
                     key={pathway.id}
-                    href={`/activities?pathway=${pathway.id}`}
+                    href={`/available-resources?pathway=${pathway.id}`}
                     className={`group flex items-center gap-3 bg-white border-2 border-rule ${colors.borderLeft} border-l-4 p-4 hover:shadow-card-hover transition-shadow`}
                   >
                     <div className={colors.text}>{PATHWAY_ICONS[pathway.id]}</div>
                     <div>
                       <h3 className="text-sm font-bold text-ink group-hover:underline">{pathway.name}</h3>
                       <p className="text-xs text-faint">{pathway.description}</p>
-                      <p className="text-[10px] text-faint mt-0.5">{count} activities</p>
+                      <p className="text-[10px] text-faint mt-0.5">{count} resources</p>
                     </div>
                   </Link>
                 )
@@ -392,7 +392,7 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm">Community Exchange &mdash; The Change Lab Inc.</p>
           <nav className="flex gap-6 text-sm">
-            <Link href="/activities" className="hover:text-white transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-white transition-colors">Available Resources</Link>
             <Link href="/search" className="hover:text-white transition-colors">Search</Link>
             <Link href="/about" className="hover:text-white transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>

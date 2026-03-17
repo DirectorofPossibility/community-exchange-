@@ -27,7 +27,7 @@ export default async function MePage() {
             Community Exchange
           </Link>
           <nav className="flex items-center gap-6 text-sm font-medium text-muted">
-            <Link href="/activities" className="hover:text-ink transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-ink transition-colors">Available Resources</Link>
             <SignOutButton />
           </nav>
         </div>
@@ -96,7 +96,7 @@ export default async function MePage() {
                 <h2 className="font-display text-lg font-bold text-ink mb-4">Quick Links</h2>
                 <div className="space-y-2">
                   <Link
-                    href="/activities"
+                    href="/available-resources"
                     className="block px-4 py-3 bg-paper border border-rule text-sm font-semibold text-ink hover:border-ink transition-colors"
                   >
                     Browse Activities
@@ -129,7 +129,7 @@ export default async function MePage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm">Community Exchange &mdash; The Change Lab Inc.</p>
           <nav className="flex gap-6 text-sm">
-            <Link href="/activities" className="hover:text-white transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-white transition-colors">Available Resources</Link>
           </nav>
         </div>
       </footer>

@@ -8,25 +8,25 @@ import {
   type PathwayId,
 } from '@/lib/sample-data'
 import Wayfinder from '@/components/Wayfinder'
-import { getActivities } from '@/lib/activities'
+import { getAvailableResources } from '@/lib/available-resources'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ActivitiesPage({
+export default async function AvailableResourcesPage({
   searchParams,
 }: {
   searchParams: Promise<{ pathway?: string }>
 }) {
   const params = await searchParams
   const selectedPathway = params.pathway as PathwayId | undefined
-  const activities = await getActivities(selectedPathway)
+  const resources = await getAvailableResources(selectedPathway)
 
-  // Group activities by city for location-sorted display
-  const grouped = new Map<string, typeof activities>()
-  for (const a of activities) {
-    const key = `${a.location.city}, ${a.location.county} County`
+  // Group by city for location-sorted display
+  const grouped = new Map<string, typeof resources>()
+  for (const r of resources) {
+    const key = `${r.location.city}, ${r.location.county} County`
     if (!grouped.has(key)) grouped.set(key, [])
-    grouped.get(key)!.push(a)
+    grouped.get(key)!.push(r)
   }
 
   return (
@@ -55,11 +55,11 @@ export default async function ActivitiesPage({
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
             </Link>
             <h1 className="font-display text-headline font-bold text-ink mb-2">
-              Activities
+              Available Resources
             </h1>
             <p className="text-muted max-w-xl">
-              Browse {activities.length} community activities across the Greater Houston metro.
-              Each activity connects to 4 centers of engagement — go as deep as you want.
+              Browse {resources.length} community resources across the Greater Houston metro.
+              Each resource connects to 4 centers of engagement — go as deep as you want.
             </p>
           </div>
         </section>
@@ -92,7 +92,7 @@ export default async function ActivitiesPage({
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/activities"
+                href="/available-resources"
                 className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-colors ${
                   !selectedPathway
                     ? 'bg-ink text-white border-ink'
@@ -107,7 +107,7 @@ export default async function ActivitiesPage({
                 return (
                   <Link
                     key={p.id}
-                    href={`/activities?pathway=${p.id}`}
+                    href={`/available-resources?pathway=${p.id}`}
                     className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-colors ${
                       isActive
                         ? `${colors.bg} text-white ${colors.border}`
@@ -122,34 +122,34 @@ export default async function ActivitiesPage({
           </div>
         </section>
 
-        {/* Activity Grid — grouped by location */}
+        {/* Resource Grid — grouped by location */}
         <section className="px-6 py-10">
           <div className="max-w-6xl mx-auto">
-            {activities.length === 0 ? (
+            {resources.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-muted text-lg">
-                  No activities yet for this pathway. Check back soon.
+                  No resources yet for this pathway. Check back soon.
                 </p>
               </div>
             ) : (
               <div className="space-y-10">
-                {Array.from(grouped.entries()).map(([locationKey, locationActivities]) => (
+                {Array.from(grouped.entries()).map(([locationKey, locationResources]) => (
                   <div key={locationKey}>
                     <div className="flex items-center gap-2 mb-4">
                       <MapPin className="w-4 h-4 text-faint" />
                       <h2 className="font-display text-lg font-bold text-ink">{locationKey}</h2>
-                      <span className="text-xs text-faint">({locationActivities.length})</span>
+                      <span className="text-xs text-faint">({locationResources.length})</span>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {locationActivities.map((activity) => {
-                        const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
-                        const colors = PATHWAY_COLOR_MAP[activity.pathway]
-                        const centerCount = Object.values(activity.centers).filter(Boolean).length
+                      {locationResources.map((resource) => {
+                        const pathway = PATHWAYS.find((p) => p.id === resource.pathway)!
+                        const colors = PATHWAY_COLOR_MAP[resource.pathway]
+                        const centerCount = Object.values(resource.centers).filter(Boolean).length
 
                         return (
                           <Link
-                            key={activity.id}
-                            href={`/activities/${activity.id}`}
+                            key={resource.id}
+                            href={`/available-resources/${resource.id}`}
                             className={`bg-white border-2 border-rule ${colors.borderTop} border-t-4 shadow-card hover:shadow-card-hover transition-all flex flex-col group`}
                           >
                             <div className="p-6 flex-1 flex flex-col">
@@ -157,18 +157,18 @@ export default async function ActivitiesPage({
                                 {pathway.name}
                               </span>
                               <h3 className="font-display text-lg font-bold text-ink mb-1 group-hover:underline">
-                                {activity.title}
+                                {resource.title}
                               </h3>
-                              <p className="text-sm text-faint mb-1">{activity.org}</p>
+                              <p className="text-sm text-faint mb-1">{resource.org}</p>
                               <p className="text-xs text-faint mb-3">
-                                {activity.location.city}, {activity.location.state} {activity.location.zip}
+                                {resource.location.city}, {resource.location.state} {resource.location.zip}
                               </p>
                               <div className="mb-4 flex items-center gap-3">
-                                <Wayfinder centers={activity.centers} />
+                                <Wayfinder centers={resource.centers} />
                                 <span className="text-xs text-faint">{centerCount} of 4 centers</span>
                               </div>
                               <p className="text-sm text-muted leading-relaxed mb-6 flex-1">
-                                {activity.description}
+                                {resource.description}
                               </p>
                               <div>
                                 <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${colors.text}`}>

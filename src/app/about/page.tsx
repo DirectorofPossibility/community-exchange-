@@ -18,7 +18,7 @@ export default function AboutPage() {
             Community Exchange
           </Link>
           <nav className="flex gap-6 text-sm font-medium text-muted">
-            <Link href="/activities" className="hover:text-ink transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-ink transition-colors">Available Resources</Link>
             <Link href="/login" className="hover:text-ink transition-colors">Sign In</Link>
           </nav>
         </div>
@@ -45,12 +45,12 @@ export default function AboutPage() {
                 {
                   icon: <Search className="w-8 h-8" />,
                   title: 'Discover',
-                  description: 'Browse activities across 7 pathways that cover every dimension of community life — health, education, neighborhood, voice, money, planet, and connection.',
+                  description: 'Browse resources across 7 pathways that cover every dimension of community life — health, education, neighborhood, voice, money, planet, and connection.',
                 },
                 {
                   icon: <Layers className="w-8 h-8" />,
                   title: 'Engage',
-                  description: 'Each activity connects to 4 centers of engagement: learn about an issue, find resources, take action, or hold decision-makers accountable.',
+                  description: 'Each resource connects to 4 centers of engagement: learn about an issue, find resources, take action, or hold decision-makers accountable.',
                 },
                 {
                   icon: <TrendingUp className="w-8 h-8" />,
@@ -102,7 +102,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm">Community Exchange &mdash; The Change Lab Inc.</p>
           <nav className="flex gap-6 text-sm">
-            <Link href="/activities" className="hover:text-white transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-white transition-colors">Available Resources</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
           </nav>
         </div>

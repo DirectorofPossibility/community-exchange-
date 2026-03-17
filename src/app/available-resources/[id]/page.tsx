@@ -11,7 +11,7 @@ import {
   PATHWAY_COLOR_MAP,
   CENTER_COLOR_MAP,
 } from '@/lib/sample-data'
-import { getActivity, getRelatedActivities } from '@/lib/activities'
+import { getAvailableResource, getRelatedResources } from '@/lib/available-resources'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,15 +22,17 @@ function Chapter({
   color,
   question,
   children,
+  disabled,
 }: {
   icon: React.ReactNode
   label: string
   color: string
   question: string
   children: React.ReactNode
+  disabled?: boolean
 }) {
   return (
-    <section className="border-t-2 border-rule">
+    <section className={`border-t-2 border-rule ${disabled ? 'opacity-40' : ''}`}>
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex items-center gap-3 mb-2">
           <div
@@ -43,6 +45,11 @@ function Chapter({
             <h2 className="font-display text-xl font-bold text-ink">{label}</h2>
             <p className="text-sm text-faint italic">{question}</p>
           </div>
+          {disabled && (
+            <span className="ml-auto text-xs font-bold uppercase tracking-wider text-faint border border-rule px-2 py-1">
+              Coming in Phase 2
+            </span>
+          )}
         </div>
         <div className="mt-6">{children}</div>
       </div>
@@ -89,18 +96,18 @@ function ObjectCard({
   )
 }
 
-export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ResourceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const activity = await getActivity(id)
+  const resource = await getAvailableResource(id)
 
-  if (!activity) {
+  if (!resource) {
     notFound()
   }
 
-  const related = await getRelatedActivities(activity)
-  const pathway = PATHWAYS.find((p) => p.id === activity.pathway)!
-  const colors = PATHWAY_COLOR_MAP[activity.pathway]
-  const cc = activity.centerContent
+  const related = await getRelatedResources(resource)
+  const pathway = PATHWAYS.find((p) => p.id === resource.pathway)!
+  const colors = PATHWAY_COLOR_MAP[resource.pathway]
+  const cc = resource.centerContent
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
@@ -111,7 +118,8 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             Community Exchange
           </Link>
           <nav className="flex gap-6 text-sm font-medium text-muted">
-            <Link href="/activities" className="hover:text-ink transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-ink transition-colors">Available Resources</Link>
+            <Link href="/search" className="hover:text-ink transition-colors">Search</Link>
             <Link href="/about" className="hover:text-ink transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-ink transition-colors">Sign In</Link>
           </nav>
@@ -123,10 +131,10 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         <section className={`${colors.borderTop} border-t-4 bg-white border-b-2 border-rule`}>
           <div className="max-w-4xl mx-auto px-6 py-10">
             <Link
-              href="/activities"
+              href="/available-resources"
               className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink transition-colors mb-6"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> All Activities
+              <ArrowLeft className="w-3.5 h-3.5" /> All Available Resources
             </Link>
 
             {/* Pathway badge */}
@@ -135,7 +143,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             </span>
 
             <h1 className="font-display text-3xl md:text-4xl font-bold text-ink mb-3 leading-tight">
-              {activity.title}
+              {resource.title}
             </h1>
 
             {/* Org anchor */}
@@ -143,50 +151,46 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
               <div className="w-7 h-7 rounded-full bg-paper flex items-center justify-center border border-rule">
                 <Users size={12} className="text-faint" />
               </div>
-              <span className="text-sm font-semibold text-ink">{activity.org}</span>
+              <span className="text-sm font-semibold text-ink">{resource.org}</span>
             </div>
 
             {/* Location */}
             <div className="flex items-center gap-2 mb-4 ml-9">
               <MapPin size={12} className="text-faint flex-shrink-0" />
               <span className="text-xs text-muted">
-                {activity.location.address}, {activity.location.city}, {activity.location.state} {activity.location.zip} &middot; {activity.location.county} County
+                {resource.location.address}, {resource.location.city}, {resource.location.state} {resource.location.zip} &middot; {resource.location.county} County
               </span>
             </div>
 
             <p className="text-muted leading-relaxed max-w-2xl mb-6">
-              {activity.description}
+              {resource.description}
             </p>
 
             {/* Journey map — shows which chapters are available */}
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs font-bold uppercase tracking-wider text-faint">Your journey:</span>
-              {activity.centers.learning && (
+              {resource.centers.learning && (
                 <a href="#explore" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule hover:border-ink transition-colors" style={{ color: CENTER_COLOR_MAP.learning.hex }}>
                   <BookOpen size={12} /> Explore
                 </a>
               )}
-              {(activity.centers.resource || activity.centers.action) && (
+              {(resource.centers.resource || resource.centers.action) && (
                 <a href="#take-action" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule hover:border-ink transition-colors" style={{ color: CENTER_COLOR_MAP.action.hex }}>
                   <Heart size={12} /> Take Action
                 </a>
               )}
-              {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
-                <>
-                  <a href="#laws-policy" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule hover:border-ink transition-colors" style={{ color: CENTER_COLOR_MAP.accountability.hex }}>
-                    <FileText size={12} /> Laws & Policy
-                  </a>
-                  <a href="#whos-responsible" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule hover:border-ink transition-colors" style={{ color: '#6b21a8' }}>
-                    <Shield size={12} /> Who&rsquo;s Responsible
-                  </a>
-                </>
-              )}
+              <a href="#laws-policy" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule text-faint/50 cursor-default">
+                <FileText size={12} /> Laws & Policy
+              </a>
+              <a href="#whos-responsible" className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border-2 border-rule text-faint/50 cursor-default">
+                <Shield size={12} /> Who&rsquo;s Responsible
+              </a>
             </div>
           </div>
         </section>
 
         {/* ─── CHAPTER 1: Explore ─── */}
-        {activity.centers.learning && cc?.learning && cc.learning.length > 0 && (
+        {resource.centers.learning && cc?.learning && cc.learning.length > 0 && (
           <div id="explore">
             <Chapter
               icon={<BookOpen size={20} />}
@@ -271,34 +275,34 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           </div>
         )}
 
-        {/* ─── CHAPTER 3: Laws & Policy ─── */}
-        {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
-          <div id="laws-policy">
-            <Chapter
-              icon={<FileText size={20} />}
-              label="Laws & Policy"
-              color={CENTER_COLOR_MAP.accountability.hex}
-              question="What are the rules that shape this?"
-            >
-              <div className="bg-white border-2 border-rule p-6">
-                <p className="text-sm text-muted leading-relaxed">
-                  Policy information for this area is being compiled. Check back soon for relevant
-                  legislation, ordinances, and regulations that affect this issue.
-                </p>
-              </div>
-            </Chapter>
-          </div>
-        )}
+        {/* ─── CHAPTER 3: Laws & Policy (Phase 2) ─── */}
+        <div id="laws-policy">
+          <Chapter
+            icon={<FileText size={20} />}
+            label="Laws & Policy"
+            color={CENTER_COLOR_MAP.accountability.hex}
+            question="What are the rules that shape this?"
+            disabled
+          >
+            <div className="bg-white border-2 border-rule p-6">
+              <p className="text-sm text-muted leading-relaxed">
+                Policy information for this area is being compiled. Check back soon for relevant
+                legislation, ordinances, and regulations that affect this issue.
+              </p>
+            </div>
+          </Chapter>
+        </div>
 
-        {/* ─── CHAPTER 4: Who's Responsible ─── */}
-        {activity.centers.accountability && cc?.accountability && cc.accountability.length > 0 && (
-          <div id="whos-responsible">
-            <Chapter
-              icon={<Shield size={20} />}
-              label="Who's Responsible"
-              color="#6b21a8"
-              question="Who makes decisions about this?"
-            >
+        {/* ─── CHAPTER 4: Who's Responsible (Phase 2) ─── */}
+        <div id="whos-responsible">
+          <Chapter
+            icon={<Shield size={20} />}
+            label="Who's Responsible"
+            color="#6b21a8"
+            question="Who makes decisions about this?"
+            disabled
+          >
+            {cc?.accountability && cc.accountability.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-4">
                 {cc.accountability.map((item, i) => (
                   <ObjectCard
@@ -310,9 +314,16 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                   />
                 ))}
               </div>
-            </Chapter>
-          </div>
-        )}
+            ) : (
+              <div className="bg-white border-2 border-rule p-6">
+                <p className="text-sm text-muted leading-relaxed">
+                  Accountability information is being compiled. Check back soon to see which
+                  officials and agencies are responsible for this area.
+                </p>
+              </div>
+            )}
+          </Chapter>
+        </div>
 
         {/* ─── Continue Your Journey ─── */}
         <section className="bg-white border-t-2 border-rule">
@@ -329,7 +340,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                 return (
                   <Link
                     key={rel.id}
-                    href={`/activities/${rel.id}`}
+                    href={`/available-resources/${rel.id}`}
                     className={`bg-paper border-2 border-rule ${relColors.borderTop} border-t-4 p-5 hover:shadow-card-hover transition-shadow group`}
                   >
                     <h3 className="text-sm font-bold text-ink group-hover:underline leading-snug">
@@ -349,7 +360,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm">Community Exchange &mdash; The Change Lab Inc.</p>
           <nav className="flex gap-6 text-sm">
-            <Link href="/activities" className="hover:text-white transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-white transition-colors">Available Resources</Link>
             <Link href="/about" className="hover:text-white transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
           </nav>

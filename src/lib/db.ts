@@ -87,6 +87,12 @@ export async function getContent(options: {
   pathway?: string
   contentType?: string
 } = {}): Promise<ContentItem[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) {
+    console.error('[getContent] Missing env vars — URL:', !!url, 'KEY:', !!key)
+    return []
+  }
   const supabase = createServiceClient()
   const { limit = 20, center, pathway } = options
 
@@ -111,7 +117,14 @@ export async function getContent(options: {
     .limit(100) // fetch all to ensure center/pathway filtering works with small datasets
 
   const { data: items, error } = await query
-  if (error || !items || items.length === 0) return []
+  if (error) {
+    console.error('[getContent] Supabase error:', error.message, error.code)
+    return []
+  }
+  if (!items || items.length === 0) {
+    console.warn('[getContent] No items returned from content_inbox')
+    return []
+  }
 
   // Get IDs for junction lookups
   const ids = items.map(i => i.id)

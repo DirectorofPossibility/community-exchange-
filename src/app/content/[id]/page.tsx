@@ -48,7 +48,8 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
             Community Exchange
           </Link>
           <nav className="flex gap-6 text-sm font-medium text-muted">
-            <Link href="/activities" className="hover:text-ink transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-ink transition-colors">Available Resources</Link>
+            <Link href="/search" className="hover:text-ink transition-colors">Search</Link>
             <Link href="/about" className="hover:text-ink transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-ink transition-colors">Sign In</Link>
           </nav>
@@ -80,7 +81,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
               )}
               {pathway && colors && (
                 <Link
-                  href={`/activities?pathway=${item.pathway}`}
+                  href={`/available-resources?pathway=${item.pathway}`}
                   className={`text-xs font-bold uppercase tracking-wider ${colors.text} hover:underline`}
                 >
                   {pathway.name}
@@ -245,7 +246,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm">Community Exchange &mdash; The Change Lab Inc.</p>
           <nav className="flex gap-6 text-sm">
-            <Link href="/activities" className="hover:text-white transition-colors">Activities</Link>
+            <Link href="/available-resources" className="hover:text-white transition-colors">Available Resources</Link>
             <Link href="/about" className="hover:text-white transition-colors">How It Works</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
           </nav>
