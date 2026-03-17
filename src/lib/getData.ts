@@ -160,7 +160,8 @@ export async function getCounties(): Promise<string[]> {
   const { data } = await supabase
     .from('organizations').select('city')
     .is('deleted_at', null).not('city', 'is', null)
-  return Array.from(new Set(data?.map((d: { city: string | null }) => d.city).filter(Boolean) as string[])).sort()
+  const rows = (data || []) as Array<{ city: string | null }>
+  return Array.from(new Set(rows.map(d => d.city).filter(Boolean) as string[])).sort()
 }
 
 export async function getPathwayCounts(): Promise<Record<string, number>> {
@@ -168,11 +169,13 @@ export async function getPathwayCounts(): Promise<Record<string, number>> {
   const { data } = await supabase.from('organizations').select('tags').is('deleted_at', null)
   const counts: Record<string, number> = {}
   PATHWAYS.forEach(p => { counts[p.id] = 0 })
-  data?.forEach((org: { tags: string[] | null }) => {
+  const orgRows = (data || []) as Array<{ tags: string[] | null }>
+  orgRows.forEach(org => {
     const orgTags = org.tags
     if (!orgTags) return
+    const tags = orgTags
     PATHWAYS.forEach(pathway => {
-      if (pathway.tags.some(tag => orgTags.some((t: string) => t.toLowerCase().includes(tag)))) {
+      if (pathway.tags.some(tag => tags.some(t => t.toLowerCase().includes(tag)))) {
         counts[pathway.id]++
       }
     })
