@@ -348,7 +348,7 @@ export default function AvailableResourcesPage() {
                 What are you looking for?
               </h1>
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', lineHeight: 1.65, maxWidth: 440 }}>
-                Choose a category below and we'll show you what's available — no forms, no judgment.
+                Choose a category below and we&apos;ll show you what&apos;s available — no forms, no judgment.
               </p>
             </div>
           ) : (
@@ -488,7 +488,7 @@ export default function AvailableResourcesPage() {
           <div style={{ textAlign: 'center', padding: '72px 20px' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>👆</div>
             <p style={{ color: '#9CA3AF', fontSize: '1rem', lineHeight: 1.6, maxWidth: 340, margin: '0 auto' }}>
-              Choose what you're looking for above — we'll show you what's available in Houston.
+              Choose what you&apos;re looking for above — we&apos;ll show you what&apos;s available in Houston.
             </p>
           </div>
         )}
