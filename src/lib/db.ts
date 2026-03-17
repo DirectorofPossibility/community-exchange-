@@ -125,10 +125,10 @@ export async function getContent(options: {
   }
 
   // Get IDs for junction lookups
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const ids = items.map((i: any) => i.id)
 
   // Parallel: fetch classifications, pathways, and org names
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [classRows, pathwayRows, orgRows] = await Promise.all([
     safeQueryMany<any>(() =>
       supabase.from('content_review_queue').select('inbox_id, ai_classification').in('inbox_id', ids)
@@ -140,6 +140,7 @@ export async function getContent(options: {
       supabase.from('organizations').select('org_id, org_name').in('org_id', items.map((i: any) => i.org_id).filter(Boolean) as string[])
     ),
   ])
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   // Build lookup maps
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -203,14 +204,13 @@ export async function getContent(options: {
 export async function getContentById(id: string): Promise<ContentItem | null> {
   const supabase = createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const item = await safeQuery<any>(() =>
     supabase.from('content_inbox').select('*').eq('id', id).single()
   )
 
   if (!item) return null
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [classData, pathwayData, orgData] = await Promise.all([
     safeQuery<any>(() =>
       supabase.from('content_review_queue').select('ai_classification').eq('inbox_id', id).single()
@@ -222,6 +222,7 @@ export async function getContentById(id: string): Promise<ContentItem | null> {
       ? safeQuery<any>(() => supabase.from('organizations').select('org_name').eq('org_id', item.org_id).single())
       : Promise.resolve(null),
   ])
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const classification = classData?.ai_classification
   const itemPathway = pathwayData
@@ -285,11 +286,12 @@ export async function getChildContent(parentId: string): Promise<ContentItem[]> 
   if (items.length === 0) return []
 
   // Get org name
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const orgIds = Array.from(new Set(items.map((i: any) => i.org_id).filter(Boolean))) as string[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const orgs = orgIds.length > 0
     ? await safeQueryMany<any>(() => supabase.from('organizations').select('org_id, org_name').in('org_id', orgIds))
     : []
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const orgMap = new Map<string, string>()
   for (const org of orgs) orgMap.set(org.org_id, org.org_name)
