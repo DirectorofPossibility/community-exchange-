@@ -169,9 +169,10 @@ export async function getPathwayCounts(): Promise<Record<string, number>> {
   const counts: Record<string, number> = {}
   PATHWAYS.forEach(p => { counts[p.id] = 0 })
   data?.forEach((org: { tags: string[] | null }) => {
-    if (!org.tags) return
+    const orgTags = org.tags
+    if (!orgTags) return
     PATHWAYS.forEach(pathway => {
-      if (pathway.tags.some(tag => org.tags.some((t: string) => t.toLowerCase().includes(tag)))) {
+      if (pathway.tags.some(tag => orgTags.some((t: string) => t.toLowerCase().includes(tag)))) {
         counts[pathway.id]++
       }
     })
