@@ -160,7 +160,7 @@ export async function getCounties(): Promise<string[]> {
   const { data } = await supabase
     .from('organizations').select('city')
     .is('deleted_at', null).not('city', 'is', null)
-  return [...new Set(data?.map((d: { city: string | null }) => d.city).filter(Boolean) as string[])].sort()
+  return Array.from(new Set(data?.map((d: { city: string | null }) => d.city).filter(Boolean) as string[])).sort()
 }
 
 export async function getPathwayCounts(): Promise<Record<string, number>> {
